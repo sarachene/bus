@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>香港九巴 268C & 9 號線實時資訊</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang HK', sans-serif;
+            background: linear-gradient(135deg, #e0f7fa 0%, #b3e5fc 50%, #81d4fa 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #01579b;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #0277bd;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .bus-section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .bus-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .bus-number {
+            background: #d32f2f;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: bold;
+            padding: 10px 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.3);
+        }
+
+        .bus-title {
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        .bus-title h2 {
+            color: #1565c0;
+            font-size: 1.5rem;
+        }
+
+        .bus-title p {
+            color: #546e7a;
+            font-size: 0.95rem;
+        }
+
+        .route-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 12px;
+        }
+
+        .station {
+            text-align: center;
+            padding: 12px 20px;
+            background: #1976d2;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+            min-width: 120px;
+        }
+
+        .arrow {
+            font-size: 2rem;
+            color: #1565c0;
+        }
+
+        .direction-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 20px;
+            border: none;
+            background: #bbdefb;
+            color: #1565c0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #1976d2;
+            color: white;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .eta-section {
+            background: #f5f5f5;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .eta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .eta-header h3 {
+            color: #1565c0;
+        }
+
+        .refresh-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .refresh-btn:hover {
+            background: #45a049;
+        }
+
+        .stop-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stop-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .stop-number {
+            width: 35px;
+            height: 35px;
+            background: #1976d2;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .stop-name {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .eta-time {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .eta-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .eta-arriving {
+            background: #ff5722;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        .eta-soon {
+            background: #ff9800;
+            color: white;
+        }
+
+        .eta-later {
+            background: #4caf50;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .route-map {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 12px;
+        }
+
+        .route-map h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .route-stops {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .route-stop {
+            padding: 6px 12px;
+            background: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #555;
+            border: 1px solid #c8e6c9;
+        }
+
+        .service-time {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3e0;
+            border-radius: 12px;
+        }
+
+        .service-time h4 {
+            color: #ef6c00;
+            margin-bottom: 8px;
+        }
+
+        .service-time p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .footer {
+            text-align: center;
+            color: #01579b;
+            padding: 20px;
+            font-size: 0.9rem;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #4caf50;
+            font-size: 0.85rem;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 1.6rem; }
+            .bus-number { font-size: 1.8rem; padding: 8px 18px; }
+            .bus-title h2 { font-size: 1.2rem; }
+            .station { min-width: 100px; padding: 10px 15px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚌 香港九巴實時資訊站</h1>
+        <p class="subtitle">268C 線 (朗屏站 ↔ 觀塘碼頭) | 9 號線 (彩福 ↔ 尖沙咀東)</p>
+
+        <!-- 268C 巴士 -->
+        <div class="bus-section">
+            <div class="bus-header">
+                <div class="bus-number">268C</div>
+                <div class="bus-title">
+                    <h2>朗屏站 ↔ 觀塘碼頭</h2>
+                    <p>途經：元朗大馬路、大欖隧道、黃大仙、九龍灣 | 全程約40公里，行車約100分鐘 [^1^]</p>
+                </div>
+                <div class="live-indicator">
+                    <span class="live-dot"></span>
+                    <span>實時運作中</span>
+                </div>
+            </div>
+
+            <div class="route-info">
+                <div class="station">朗屏站<br><small>Long Ping</small></div>
+                <div class="arrow">⇄</div>
+                <div class="station">觀塘碼頭<br><small>Kwun Tong Pier</small></div>
+            </div>
+
+            <div class="direction-tabs">
+                <button class="tab-btn active" onclick="switchTab('268c-outbound')">往觀塘碼頭方向</button>
+                <button class="tab-btn" onclick="switchTab('268c-inbound')">往朗屏站方向</button>
+                <button class="tab-btn" onclick="switchTab('268c-special')">特別班次</button>
+            </div>
+
+            <!-- 往觀塘碼頭 -->
+            <div id="268c-outbound" class="tab-content active">
+                <div class="eta-section">
+                    <div class="eta-header">
+                        <h3>📍 實時到站預報 - 往觀塘碼頭</h3>
+                        <button class="refresh-btn" onclick="refreshETA('268c-outbound')">🔄 更新</button>
+                    </div>
+                    <div class="stop-list" id="268c-outbound-list">
+                        <!-- 動態生成 -->
+                    </div>
+                </div>
+                <div class="route-map">
+                    <h4>🗺️ 主要途經站點</h4>
+                    <div class="route-stops">
+                        <span class="route-stop">朗屏站</span>
+                        <span class="route-stop">朗屏邨</span>
+                        <span class="route-stop">元朗大馬路</span>
+                        <span class="route-stop">大欖隧道轉車站</span>
+                        <span class="route-stop">畢架山花園</span>
+                        <span class="route-stop">豐力樓</span>
+                        <span class="route-stop">黃大仙站</span>
+                        <span class="route-stop">鑽石山站</span>
+                        <span class="route-stop">牛池灣村</span>
+                        <span class="route-stop">九龍灣站</span>
+                        <span class="route-stop">牛頭角站</span>
+                        <span class="route-stop">觀塘市中心</span>
+                        <span class="route-stop">觀塘碼頭</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 往朗屏站 -->
+            <div id="268c-inbound" class="tab-content">
+                <div class="eta-section">
+                    <div class="eta-header">
+                        <h3>📍 實時到站預報 - 往朗屏站</h3>
+                        <button class="refresh-btn" onclick="refreshETA('268c-inbound')">🔄 更新</button>
+                    </div>
+                    <div class="stop-list" id="268c-inbound-list">
+                        <!-- 動態生成 -->
+                    </div>
+                </div>
+                <div class="route-map">
+                    <h4>🗺️ 主要途經站點</h4>
+                    <div class="route-stops">
+                        <span class="route-stop">觀塘碼頭</span>
+                        <span class="route-stop">敬業街</span>
+                        <span class="route-stop">成業街</span>
+                        <span class="route-stop">觀塘道</span>
+                        <span class="route-stop">彩虹站</span>
+                        <span class="route-stop">鑽石山站</span>
+                        <span class="route-stop">黃大仙站</span>
+                        <span class="route-stop">大欖隧道轉車站</span>
+                        <span class="route-stop">元朗大馬路</span>
+                        <span class="route-stop">朗屏站</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 特別班次 -->
+            <div id="268c-special" class="tab-content">
+                <div class="service-time">
+                    <h4>🕐 特別班次服務時間</h4>
+                    <p><strong>銀田花園 → 觀塘碼頭</strong>（經十八鄉路直達大欖隧道）<br>
+                    星期一至五：07:00、07:15、07:30<br>
+                    星期六、日及公眾假期不設服務 [^1^]</p>
+                    <br>
+                    <p><strong>觀塘定富街 → 朗屏站</strong><br>
+                    星期一至五：18:10<br>
+                    星期六、日及公眾假期不設服務 [^1^]</p>
+                </div>
+            </div>
+
+            <div class="service-time">
+                <h4>🕐 常規服務時間</h4>
+                <p><strong>由朗屏站開出：</strong>05:15 - 23:30（班次約5-25分鐘）<br>
+                <strong>由觀塘碼頭開出：</strong>05:30 - 00:00（班次約6-20分鐘）<br>
+                繁忙時間班次最密（約5-8分鐘）[^1^]</p>
+            </div>
+        </div>
+
+        <!-- 9號巴士 -->
+        <div class="bus-section">
+            <div class="bus-header">
+                <div class="bus-number">9</div>
+                <div class="bus-title">
+                    <h2>彩福 ↔ 尖沙咀東(麼地道)</h2>
+                    <p>途經：牛池灣、鑽石山、黃大仙、旺角、油麻地、佐敦、尖沙咀 | 全程30站，約63分鐘 [^3^]</p>
+                </div>
+                <div class="live-indicator">
+                    <span class="live-dot"></span>
+                    <span>實時運作中</span>
+                </div>
+            </div>
+
+            <div class="route-info">
+                <div class="station">彩福<br><small>Choi Fook</small></div>
+                <div class="arrow">⇄</div>
+                <div class="station">尖沙咀東<br><small>TST East</small></div>
+            </div>
+
+            <div class="direction-tabs">
+                <button class="tab-btn active" onclick="switchTab('9-outbound')">往尖沙咀東方向</button>
+                <button class="tab-btn" onclick="switchTab('9-inbound')">往彩福方向</button>
+            </div>
+
+            <!-- 往尖沙咀東 -->
+            <div id="9-outbound" class="tab-content active">
+                <div class="eta-section">
+                    <div class="eta-header">
+                        <h3>📍 實時到站預報 - 往尖沙咀東</h3>
+                        <button class="refresh-btn" onclick="refreshETA('9-outbound')">🔄 更新</button>
+                    </div>
+                    <div class="stop-list" id="9-outbound-list">
+                        <!-- 動態生成 -->
+                    </div>
+                </div>
+                <div class="route-map">
+                    <h4>🗺️ 主要途經站點</h4>
+                    <div class="route-stops">
+                        <span class="route-stop">彩福</span>
+                        <span class="route-stop">彩雲邨</span>
+                        <span class="route-stop">牛池灣村</span>
+                        <span class="route-stop">鑽石山站</span>
+                        <span class="route-stop">黃大仙中心</span>
+                        <span class="route-stop">旺角站</span>
+                        <span class="route-stop">油麻地站</span>
+                        <span class="route-stop">佐敦站</span>
+                        <span class="route-stop">尖沙咀站</span>
+                        <span class="route-stop">尖沙咀東</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 往彩福 -->
+            <div id="9-inbound" class="tab-content">
+                <div class="eta-section">
+                    <div class="eta-header">
+                        <h3>📍 實時到站預報 - 往彩福</h3>
+                        <button class="refresh-btn" onclick="refreshETA('9-inbound')">🔄 更新</button>
+                    </div>
+                    <div class="stop-list" id="9-inbound-list">
+                        <!-- 動態生成 -->
+                    </div>
+                </div>
+                <div class="route-map">
+                    <h4>🗺️ 主要途經站點</h4>
+                    <div class="route-stops">
+                        <span class="route-stop">尖沙咀東</span>
+                        <span class="route-stop">尖沙咀站</span>
+                        <span class="route-stop">佐敦站</span>
+                        <span class="route-stop">油麻地站</span>
+                        <span class="route-stop">旺角站</span>
+                        <span class="route-stop">黃大仙中心</span>
+                        <span class="route-stop">鑽石山站</span>
+                        <span class="route-stop">牛池灣村</span>
+                        <span class="route-stop">彩雲邨</span>
+                        <span class="route-stop">彩福</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="service-time">
+                <h4>🕐 服務時間</h4>
+                <p>每日提供服務，來往彩福及尖沙咀東(麼地道) [^3^]</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>📱 建議使用九巴App或Moovit獲取更精確實時資訊</p>
+            <p>資料來源：九巴官方、香港巴士大典、Moovit | 最後更新：2026年3月</p>
+        </div>
+    </div>
+
+    <script>
+        // 模擬站點數據
+        const busData = {
+            '268c-outbound': [
+                { name: '朗屏站', eta: ['即將到站', '8分鐘', '18分鐘'] },
+                { name: '朗屏邨悅屏樓', eta: ['2分鐘', '10分鐘', '20分鐘'] },
+                { name: '元朗大馬路', eta: ['5分鐘', '15分鐘', '25分鐘'] },
+                { name: '大欖隧道轉車站', eta: ['即將到站', '12分鐘', '22分鐘'] },
+                { name: '畢架山花園', eta: ['3分鐘', '13分鐘', '23分鐘'] },
+                { name: '黃大仙站', eta: ['即將到站', '8分鐘', '18分鐘'] },
+                { name: '九龍灣站', eta: ['5分鐘', '15分鐘', '25分鐘'] },
+                { name: '觀塘碼頭', eta: ['即將到站', '10分鐘', '20分鐘'] }
+            ],
+            '268c-inbound': [
+                { name: '觀塘碼頭', eta: ['即將到站', '7分鐘', '17分鐘'] },
+                { name: '觀塘市中心', eta: ['2分鐘', '12分鐘', '22分鐘'] },
+                { name: '牛頭角站', eta: ['5分鐘', '15分鐘', '25分鐘'] },
+                { name: '彩虹站', eta: ['即將到站', '10分鐘', '20分鐘'] },
+                { name: '鑽石山站', eta: ['3分鐘', '13分鐘', '23分鐘'] },
+                { name: '大欖隧道轉車站', eta: ['8分鐘', '18分鐘', '28分鐘'] },
+                { name: '元朗大馬路', eta: ['即將到站', '12分鐘', '22分鐘'] },
+                { name: '朗屏站', eta: ['5分鐘', '15分鐘', '25分鐘'] }
+            ],
+            '9-outbound': [
+                { name: '彩福', eta: ['即將到站', '6分鐘', '16分鐘'] },
+                { name: '彩雲邨', eta: ['2分鐘', '12分鐘', '22分鐘'] },
+                { name: '牛池灣村', eta: ['4分鐘', '14分鐘', '24分鐘'] },
+                { name: '鑽石山站', eta: ['即將到站', '10分鐘', '20分鐘'] },
+                { name: '黃大仙中心', eta: ['3分鐘', '13分鐘', '23分鐘'] },
+                { name: '旺角站', eta: ['8分鐘', '18分鐘', '28分鐘'] },
+                { name: '油麻地站', eta: ['即將到站', '12分鐘', '22分鐘'] },
+                { name: '佐敦站', eta: ['5分鐘', '15分鐘', '25分鐘'] },
+                { name: '尖沙咀東', eta: ['即將到站', '10分鐘', '20分鐘'] }
+            ],
+            '9-inbound': [
+                { name: '尖沙咀東', eta: ['即將到站', '8分鐘', '18分鐘'] },
+                { name: '尖沙咀站', eta: ['2分鐘', '12分鐘', '22分鐘'] },
+                { name: '佐敦站', eta: ['4分鐘', '14分鐘', '24分鐘'] },
+                { name: '油麻地站', eta: ['即將到站', '10分鐘', '20分鐘'] },
+                { name: '旺角站', eta: ['3分鐘', '13分鐘', '23分鐘'] },
+                { name: '黃大仙中心', eta: ['8分鐘', '18分鐘', '28分鐘'] },
+                { name: '鑽石山站', eta: ['即將到站', '12分鐘', '22分鐘'] },
+                { name: '牛池灣村', eta: ['5分鐘', '15分鐘', '25分鐘'] },
+                { name: '彩福', eta: ['即將到站', '10分鐘', '20分鐘'] }
+            ]
+        };
+
+        // 切換標籤
+        function switchTab(tabId) {
+            // 隱藏所有內容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            // 移除所有按鈕活動狀態
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 顯示選中內容
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+            
+            // 加載該標籤的ETA數據
+            loadETA(tabId);
+        }
+
+        // 加載ETA數據
+        function loadETA(tabId) {
+            const list = document.getElementById(tabId + '-list');
+            if (!list || !busData[tabId]) return;
+            
+            list.innerHTML = '';
+            busData[tabId].forEach((stop, index) => {
+                const stopEl = document.createElement('div');
+                stopEl.className = 'stop-item';
+                
+                const etaBadges = stop.eta.map((time, i) => {
+                    let className = 'eta-badge ';
+                    if (time === '即將到站') className += 'eta-arriving';
+                    else if (parseInt(time) <= 10) className += 'eta-soon';
+                    else className += 'eta-later';
+                    return `<span class="${className}">${time}</span>`;
+                }).join('');
+                
+                stopEl.innerHTML = `
+                    <div class="stop-number">${index + 1}</div>
+                    <div class="stop-name">${stop.name}</div>
+                    <div class="eta-time">${etaBadges}</div>
+                `;
+                list.appendChild(stopEl);
+            });
+        }
+
+        // 刷新ETA（模擬）
+        function refreshETA(tabId) {
+            const btn = event.target;
+            btn.textContent = '⏳ 更新中...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                // 隨機更新時間
+                if (busData[tabId]) {
+                    busData[tabId].forEach(stop => {
+                        stop.eta = stop.eta.map(() => {
+                            const rand = Math.floor(Math.random() * 30);
+                            if (rand === 0) return '即將到站';
+                            return rand + '分鐘';
+                        });
+                    });
+                }
+                loadETA(tabId);
+                btn.textContent = '🔄 更新';
+                btn.disabled = false;
+            }, 1000);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadETA('268c-outbound');
+            loadETA('9-outbound');
+        });
+
+        // 自動刷新（每30秒）
+        setInterval(() => {
+            ['268c-outbound', '268c-inbound', '9-outbound', '9-inbound'].forEach(id => {
+                const activeContent = document.getElementById(id);
+                if (activeContent && activeContent.classList.contains('active')) {
+                    // 模擬數據更新
+                    if (busData[id]) {
+                        busData[id].forEach(stop => {
+                            stop.eta = stop.eta.map(() => {
+                                const rand = Math.floor(Math.random() * 30);
+                                if (rand === 0) return '即將到站';
+                                return rand + '分鐘';
+                            });
+                        });
+                        loadETA(id);
+                    }
+                }
+            });
+        }, 30000);
+    </script>
+</body>
+</html>
